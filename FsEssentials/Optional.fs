@@ -4,10 +4,7 @@ open Prelude
 
 module Option =
 
-    let (>>=) oa fa =
-        match oa with
-        | None -> None
-        | Some a -> fa a
+    let (>>=) oa fa = Option.bind fa oa
 
 
     let (>=>) f1 f2 = f1 >> (>>=) f2
