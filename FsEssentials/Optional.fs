@@ -7,7 +7,7 @@ module Option =
     let (>>=) oa fa = Option.bind fa oa
 
 
-    let (>=>) f1 f2 = f1 >> (>>=) f2
+    let (>=>) f1 f2 = f1 >> Option.bind f2
 
 
     let map fa oa = oa >>= (fa >> Some)

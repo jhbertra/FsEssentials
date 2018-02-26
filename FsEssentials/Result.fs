@@ -7,7 +7,7 @@ module Result =
     let (>>=) ra fa = Result.bind fa ra
 
 
-    let (>=>) f1 f2 = f1 >> (>>=) f2
+    let (>=>) f1 f2 = f1 >> Result.bind f2
 
 
     let (<*>) rfa ra =

@@ -25,7 +25,7 @@ module State =
     let (>>=) sa fa = bind fa sa
 
 
-    let (>=>) f1 f2 = f1 >> (>>=) f2
+    let (>=>) f1 f2 = f1 >> bind f2
 
 
     let (<*>) sfa sa =
@@ -43,7 +43,7 @@ module State =
 
     let (<+>) s1 s2 = 
         create ( fun s ->
-            let result , s = run s s1
+            let ( s , result ) = run s s1
             run s s2 )
 
 
@@ -67,10 +67,10 @@ module State =
     | b :: b' -> fab a b >>= flip (fold fab) b'
 
 
-    let inline eval initial = run initial >> fst
+    let inline eval initial = run initial >> snd
 
 
-    let inline exec initial = run initial >> snd
+    let inline exec initial = run initial >> fst
 
 
     let inline map f = f >> fromValue |> bind
@@ -82,7 +82,7 @@ module State =
     let inline put newState = State (fun s -> (newState, ()))
 
 
-    let inline modify f = get |> bind (f >> put)
+    let inline modify f = get >>= (f >> put)
 
 
     let inline gets f = get |> map f
@@ -114,7 +114,7 @@ module State =
             else
                 this.Zero ()
 
-        member this.Zero () = create ( fun s -> s , () )
+        member this.Zero () = create ( fun s -> ( s , () ) )
 
 
     let builder = StateBuilder()
