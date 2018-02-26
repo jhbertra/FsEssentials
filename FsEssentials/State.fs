@@ -79,7 +79,7 @@ module State =
     let get = State (fun s -> (s,s))
 
 
-    let inline put newState = State (fun s -> ((), newState))
+    let inline put newState = State (fun s -> (newState, ()))
 
 
     let inline modify f = get |> bind (f >> put)
@@ -114,7 +114,7 @@ module State =
             else
                 this.Zero ()
 
-        member inline this.Zero () = create ( fun s -> (), s )
+        member this.Zero () = create ( fun s -> s , () )
 
 
     let builder = StateBuilder()

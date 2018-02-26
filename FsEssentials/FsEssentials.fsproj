@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>FsEssentials_jhbertra</PackageId>
+    <Authors>Jamie Bertram</Authors>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Owners>Jamie Bertram</Owners>
+    <PackageProjectUrl>https://github.com/jhbertra/FsEssentials</PackageProjectUrl>
+    <Summary>A core collection of F# utilities</Summary>
+    <Title>FsEssentials</Title>
+    <Description>A core collection of F# utilities</Description>
+    <PackageVersion>1.0.1</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,4 +20,7 @@
     <Compile Include="State.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
+  </ItemGroup>
 </Project>
