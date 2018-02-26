@@ -1,8 +1,6 @@
 namespace FsEssentials
 
-
 open Prelude
-
 
 module Option =
 
@@ -24,6 +22,9 @@ module Option =
 
 
     let (<^>) fa = (<*>) (Some fa)
+
+
+    let (<?>) ofa a = ofa <*> Some a
 
 
     let (<|>) oa ob =
@@ -91,21 +92,12 @@ module Option =
         | Some value -> value
 
 
-    let optionToSingletonList = function
+    let toSingletonList = function
     | None -> []
     | Some x -> [x]
-
-
-    let mapOption f option =
-        match option with
-        | None -> None
-        | Some value -> Some (f value)
 
 
     let rec filterNone = function
     | [] -> []
     | Some x :: xs -> x :: filterNone xs
     | None :: xs -> [] @ filterNone xs
-
-
-    let (<?>) f arg = mapOption (fun f -> f arg) f
