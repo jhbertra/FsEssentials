@@ -10,7 +10,7 @@
     <Summary>A core collection of F# utilities</Summary>
     <Title>FsEssentials</Title>
     <Description>A core collection of F# utilities</Description>
-    <PackageVersion>1.0.2</PackageVersion>
+    <PackageVersion>1.0.3</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
