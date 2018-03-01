@@ -54,4 +54,4 @@ module Prelude =
     let flip f a1 a2 = f a2 a1
 
 
-    let idFunc x = x
+    let constant a _ = a

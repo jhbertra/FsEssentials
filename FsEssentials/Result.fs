@@ -1,64 +1,143 @@
-﻿namespace FsEssentials
+namespace FsEssentials
 
 open Prelude
 
 module Result =
 
-    let (>>=) ra fa = Result.bind fa ra
+    let (>>=) sa fa = Result.bind fa sa
 
 
-    let (>=>) f1 f2 = f1 >> Result.bind f2
+    let map fa sa = sa >>= (fa >> Ok)
 
 
-    let (<*>) rfa ra =
-        match ( rfa , ra ) with
-        | ( Error efa , Error ea ) -> Error (ea :: efa)
-        | ( Error efa , Ok _ ) -> Error efa
-        | ( Ok _ , Error ea ) -> Error [ea]
-        | ( Ok fa , Ok a ) -> Ok (fa a)
+    let pureA x = Ok x
 
 
-    let (<^>) fa = (<*>) (Ok fa)
+    let (<*>) rfa = function
+    | Error e -> Error e
+    | Ok a -> map ((|>) a) rfa
 
 
-    let (<?>) fa ra = fa <*> Ok ra
 
-
-    let (<|>) ra rb =
-        match ( ra , rb ) with
+    let (<|>) sa rb =
+        match ( sa , rb ) with
         | ( Error _ , b ) -> b
         | ( a , _  ) -> a
 
 
-    let lift2 fab ra rb = fab <^> ra <*> rb
+    // #Instance Monad
 
-
-    let lift3 fabc ra rb rc = fabc <^> ra <*> rb <*> rc
-
-
-    let lift4 fabcd ra rb rc rd = fabcd <^> ra <*> rb <*> rc <*> rd
-
-
-    let join = function
-    | Error e -> Error e
-    | Ok ( Error e ) -> Error e
-    | Ok ( Ok a ) -> Ok a
-
-
-    let rec coalesce e = function
-    | [] -> Error e
-    | o :: o' -> o <|> coalesce e o'
-
-
-    let filter fa oa =
-        match Result.map fa oa with
-        | Ok true -> oa
-        | e -> e
-
-
+    // #Typeclass Functor
+    
+    let (<^) fa = constant fa |> map
+    
+    
+    let fvoid fa = map (constant ()) fa
+    
+    // #Typeclass End
+    // #Typeclass Applicative
+    
+    
+    let liftA f x = pureA f <*> x
+    
+    
+    let liftA2 f x = (<*>) (map f x)
+    
+    
+    let liftA3 f a b c = liftA2 f a b <*> c
+    
+    
+    let (|*>) a1 a2 = id <^ a1 <*> a2
+    
+    
+    let (<*|) x = liftA2 constant x
+    
+    
+    let (<^>) f = pureA f |> (<*>)
+    
+    
+    let (<?>) af a = pureA a |> (<*>) af
+    
+    
+    let filter pred list =
+        let cons x xs = x :: xs
+        List.foldBack (fun x -> liftA2 (fun flg -> if flg then cons x else id) (pred x)) list (pureA [])
+        
+        
+    let sequence ms =
+        let cons x xs = x :: xs
+        List.fold (fun x m -> cons <^> m <*> x) (pureA []) ms
+    
+    
+    let whenA b fu = if b then fu else pureA () 
+    
+    
+    let unlessA b = whenA !b
+    
+    // #Typeclass End
+    // #Typeclass Monad
+    
+    
+    let join x = x >>= id
+    
+    
+    let (>>!) x y = x >>= fun _ -> y
+    
+    
+    let (=<<) f x = x >>= f
+    
+    
+    let (>=>) f1 f2 = (fun a -> f1 a >>= f2)
+    
+    
+    let ret = pureA
+    
+    
+    let mapM f ms =
+        let k a r = f a >>= (fun x -> r >>= (fun xs -> ret (x::xs)))
+        List.foldBack k ms (ret [])
+    
+    
+    let liftM f = f >> ret |> (=<<)
+    
+    
+    let liftM2 f m1 m2 =
+        m1 >>= (fun x1 ->
+        m2 >>= (fun x2 ->
+        f x1 x2 |> ret))
+    
+    
+    let liftM3 f m1 m2 m3 =
+        m1 >>= (fun x1 ->
+        m2 >>= (fun x2 ->
+        m3 >>= (fun x3 ->
+        f x1 x2 x3 |> ret)))
+    
+    
+    let liftM4 f m1 m2 m3 m4 =
+        m1 >>= (fun x1 ->
+        m2 >>= (fun x2 ->
+        m3 >>= (fun x3 ->
+        m4 >>= (fun x4 ->
+        f x1 x2 x3 x4 |> ret))))
+    
+    
+    let liftM5 f m1 m2 m3 m4 m5 =
+        m1 >>= (fun x1 ->
+        m2 >>= (fun x2 ->
+        m3 >>= (fun x3 ->
+        m4 >>= (fun x4 ->
+        m5 >>= (fun x5 ->
+        f x1 x2 x3 x4 x5 |> ret)))))
+    
+    
     let rec fold fab a = function
-    | [] -> Ok a
+    | [] -> ret a
     | b :: b' -> fab a b >>= flip (fold fab) b'
+    
+    // #Typeclass End
+
+    // #Instance End
 
 
     type ResultBuilder() =
@@ -69,16 +148,18 @@ module Result =
 
         member this.Delay(f) = f()
 
-        member this.Return(x) = Ok x
+        member inline this.For (seq : 'a seq, f : 'a -> Result<'b, 'c>) = Seq.map f seq
+
+        member this.Return(x) = ret x
 
         member this.ReturnFrom(o) = o
 
-        member this.Yield(x) = Ok x
+        member this.Yield(x) = ret x
 
         member this.YieldFrom(o) = o
         
 
-    let builder = ResultBuilder()
+    let validate = ResultBuilder()
 
 
     let fromOption e = function

@@ -15,12 +15,15 @@
 
   <ItemGroup>
     <Compile Include="Prelude.fs" />
-    <Compile Include="Optional.fs" />
+    <Compile Include="Option.fs" />
     <Compile Include="Result.fs" />
     <Compile Include="State.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
+    <None Include="TypeclassSnippets\Alternative.fs" />
+    <None Include="TypeclassSnippets\Applicative.fs" />
+    <None Include="TypeclassSnippets\Functor.fs" />
+    <None Include="TypeclassSnippets\Monad.fs" />
+    <None Include="TypeclassSnippets\MonadPlus.fs" />
+    <None Include="TypeclassSnippets\Monoid.fs" />
   </ItemGroup>
 </Project>

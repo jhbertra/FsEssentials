@@ -2,69 +2,29 @@ namespace FsEssentials
 
 open Prelude
 
+module Option =
 
-type State<'s, 'a> = State of ('s -> 's * 'a)
-
-
-module State =
+    let (>>=) oa fa = Option.bind fa oa
 
 
-    let inline create s = State s
+    let map fa oa = oa >>= (fa >> Some)
 
 
-    let inline fromValue x = create ( fun s -> ( s , x ) )
+    let pureA x = Some x
 
 
-    let inline run initial ( State f ) = f initial
+    let (<*>) ofa = function
+    | None -> None
+    | Some a -> map ((|>) a) ofa
 
 
-    let inline bind fa sa = 
-        create ( fun s -> 
-            let ( s , a ) = run s sa
-            fa a |> run s )
+    let empty = None
 
 
-    let (>>=) ra fa = bind fa ra
-
-
-    let map fa ra = ra >>= (fa >> fromValue)
-
-
-    let inline eval initial = run initial >> snd
-
-
-    let inline exec initial = run initial >> fst
-
-
-    let get = State (fun s -> (s,s))
-
-
-    let inline put newState = State (fun s -> (newState, ()))
-
-
-    let inline modify f = get >>= (f >> put)
-
-
-    let inline gets f = get |> map f
-
-
-    let pureA = fromValue
-
-
-    let (<*>) sfa sa =
-        create ( fun s ->
-            let ( s , fa ) = run s sfa
-            let ( s , a ) = run s sa
-            fa a |> fromValue |> run s )
-
-
-    let empty = State (fun s -> ( s , () ) )
-
-
-    let (<|>) s1 s2 = 
-        create ( fun s ->
-            let ( s , result ) = run s s1
-            run s s2 )
+    let (<|>) oa ob =
+        match ( oa , ob ) with
+        | ( None , b ) -> b
+        | ( a , _  ) -> a
 
 
     // #Instance MonadPlus
@@ -214,7 +174,7 @@ module State =
     // #Instance End
 
 
-    type StateBuilder() =
+    type OptionalBuilder() =
 
         member this.Bind(x, f) = x >>= f
 
@@ -222,7 +182,7 @@ module State =
 
         member this.Delay(f) = f()
 
-        member inline this.For (seq : 'a seq, f : 'a -> State<'b, 'c>) = Seq.map f seq
+        member inline this.For (seq : 'a seq, f : 'a -> Option<'b>) = Seq.map f seq
 
         member this.Return(x) = ret x
 
@@ -232,9 +192,26 @@ module State =
 
         member this.YieldFrom(o) = o
 
-        member this.While (f : unit -> bool, x : State<'a, 'b>) = if f () then x <|> this.While (f, x) else x
+        member this.While (f : unit -> bool, x : Option<'b>) = if f () then x <|> this.While (f, x) else x
 
         member this.Zero () = mzero
+        
+
+    let maybe = OptionalBuilder()
 
 
-    let state = StateBuilder()
+    let defaultIfNone defaultValue option =
+        match option with
+        | None -> defaultValue
+        | Some value -> value
+
+
+    let toSingletonList = function
+    | None -> []
+    | Some x -> [x]
+
+
+    let rec filterNone = function
+    | [] -> []
+    | Some x :: xs -> x :: filterNone xs
+    | None :: xs -> [] @ filterNone xs
