@@ -35,11 +35,13 @@ let (<?>) af a = pureA a |> (<*>) af
 let filter pred list =
     let cons x xs = x :: xs
     List.foldBack (fun x -> liftA2 (fun flg -> if flg then cons x else id) (pred x)) list (pureA [])
+    |> map List.rev
     
     
 let sequence ms =
     let cons x xs = x :: xs
     List.fold (fun x m -> cons <^> m <*> x) (pureA []) ms
+    |> map List.rev
 
 
 let whenA b fu = if b then fu else pureA () 

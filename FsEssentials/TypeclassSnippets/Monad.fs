@@ -31,6 +31,7 @@ let ret = pureA
 let mapM f ms =
     let k a r = f a >>= (fun x -> r >>= (fun xs -> ret (x::xs)))
     List.foldBack k ms (ret [])
+    |> map List.rev
 
 
 let liftM f = f >> ret |> (=<<)

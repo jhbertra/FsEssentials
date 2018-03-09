@@ -1,6 +1,7 @@
 namespace FsEssentials
 
 open Prelude
+open System.Xml
 
 module Result =
 
@@ -13,10 +14,12 @@ module Result =
     let pureA x = Ok x
 
 
-    let (<*>) rfa = function
-    | Error e -> Error e
-    | Ok a -> map ((|>) a) rfa
-
+    let (<*>) rfa ra =
+        match ( rfa , ra ) with
+        | ( Error es , Error e ) -> Error (es @ [e])
+        | ( Error es, _ ) -> Error es
+        | ( _ , Error e ) -> Error [e]
+        | ( Ok fa , Ok a ) -> fa a |> Ok
 
 
     let (<|>) sa rb =
@@ -62,11 +65,13 @@ module Result =
     let filter pred list =
         let cons x xs = x :: xs
         List.foldBack (fun x -> liftA2 (fun flg -> if flg then cons x else id) (pred x)) list (pureA [])
+        |> map List.rev
         
         
     let sequence ms =
         let cons x xs = x :: xs
         List.fold (fun x m -> cons <^> m <*> x) (pureA []) ms
+        |> map List.rev
     
     
     let whenA b fu = if b then fu else pureA () 
@@ -96,6 +101,7 @@ module Result =
     let mapM f ms =
         let k a r = f a >>= (fun x -> r >>= (fun xs -> ret (x::xs)))
         List.foldBack k ms (ret [])
+        |> map List.rev
     
     
     let liftM f = f >> ret |> (=<<)
@@ -138,6 +144,32 @@ module Result =
     // #Typeclass End
 
     // #Instance End
+    
+    
+    let filter pred =
+        List.fold 
+            (fun x a ->
+                match ( x , pred a ) with
+                | ( Error es , Error e ) -> Error (es @ [e])
+                | ( Error _ , _ ) -> x
+                | ( _ , Error e ) -> Error [e]
+                | ( Ok xs , Ok true ) -> Ok (xs @ [a])
+                | ( _ , Ok false) -> x 
+            )
+            (pureA [])
+        
+        
+    let sequence results =
+        List.fold 
+            (fun x a ->
+                match ( x , a ) with
+                | ( Error es , Error e ) -> Error (es @ [e])
+                | ( Error _ , _ ) -> x
+                | ( _ , Error e ) -> Error [e]
+                | ( Ok xs , Ok x ) -> Ok (xs @ [x])
+            )            
+            (pureA [])
+            results
 
 
     type ResultBuilder() =

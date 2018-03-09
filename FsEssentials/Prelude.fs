@@ -1,6 +1,21 @@
 ﻿namespace FsEssentials
 
+open System
 module Prelude =
+
+    type IEmpty<'a> =
+
+        abstract member Empty : 'a
+
+    type IMonoid<'a, 'e when 'a :> IMonoid<'a, 'e> and 'e :> IEmpty<'a> and 'e : struct> =
+        
+        abstract member Append : 'a -> 'a
+        
+
+    let mconcat<'a, 'e when 'a :> IMonoid<'a, 'e> and 'e :> IEmpty<'a> and 'e : struct>
+        (ms : 'a list) =
+        List.fold (fun (a : 'a) b -> a.Append(b)) Unchecked.defaultof<'e>.Empty ms
+
 
     let shuffleArr (rng: System.Random) arr =
         let array = Array.copy arr
